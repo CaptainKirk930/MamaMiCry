@@ -2,6 +2,8 @@
 //Last edited by: John Kirkpatrick
 
 #include "LowPower.h"
+#include <avr/sleep.h>
+#include <avr/power.h>
 
 //D13                         //D12
 //3V3                         //D11 (PWM)
@@ -37,6 +39,25 @@ void changeMotorMode()
 
 void setup() 
 {
+  // disable ADC
+//  ADCSRA = 0; 
+//  for (byte i = 0; i <= A5; i++)
+//  {
+//    pinMode (i, OUTPUT);    // changed as per below
+//    digitalWrite (i, LOW);  //     ditto
+//  }
+//  power_adc_disable(); // ADC converter
+  //power_spi_disable(); // SPI
+  //power_usart0_disable();// Serial (USART) 
+  //power_timer0_disable();// Timer 0
+  //power_timer1_disable();// Timer 1
+  //power_timer2_disable();// Timer 2
+  //power_twi_disable(); // TWI (I2C)
+  set_sleep_mode (SLEEP_MODE_IDLE); 
+  noInterrupts (); 
+  sleep_enable();
+  interrupts ();
+  sleep_cpu (); 
   Serial.begin(115200);
   Serial.print("BOOT_UP");
   pinMode(MOTOR_PIN, OUTPUT);
@@ -94,8 +115,16 @@ void loop()
     resetFlag = false;
     analogWrite(MOTOR_PIN, 0);
     delay(500);
-    LowPower.powerDown(SLEEP_FOREVER, ADC_OFF, BOD_OFF);
-    //detachInterrupt(digitalPinToInterrupt(MOTOR_BUTTON)); 
-  }
-  
+    
+    set_sleep_mode (SLEEP_MODE_PWR_DOWN); 
+    noInterrupts ();           // timed sequence follows
+    sleep_enable();
+   
+    // turn off brown-out enable in software
+    MCUCR = bit (BODS) | bit (BODSE);  // turn on brown-out enable select
+    MCUCR = bit (BODS);        // this must be done within 4 clock cycles of above
+    interrupts ();             // guarantees next instruction executed
+    sleep_cpu ();              // sleep within 3 clock cycles of above 
+    //LowPower.powerDown(SLEEP_FOREVER, ADC_OFF, BOD_OFF);
+  } 
 }
