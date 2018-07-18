@@ -27,22 +27,34 @@ byte motorMode = 0;
 unsigned long timeSinceLastButtonPush = 0;
 unsigned long currentTime = 0;
 unsigned long sleepTime = 0;
+bool buttonPushed = false;
+bool resetFlag = false;
 
 void changeMotorMode() 
 {
-  motorMode++;
+  buttonPushed = true;
 }
 
 void setup() 
 {
+  Serial.begin(115200);
+  Serial.print("BOOT_UP");
   pinMode(MOTOR_PIN, OUTPUT);
   pinMode(MOTOR_BUTTON, INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(MOTOR_BUTTON), changeMotorMode, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(MOTOR_BUTTON), changeMotorMode, FALLING);
 }
 
 void loop() 
 {
   currentTime = millis();
+  if( (buttonPushed == true) && (currentTime - timeSinceLastButtonPush > 250) )
+  {
+    motorMode++;
+    timeSinceLastButtonPush = millis();
+    Serial.print("Motor Mode: ");
+    Serial.println(motorMode);
+  }
+  buttonPushed = false;
   if(motorMode > 3)
   {
     motorMode = 0;
@@ -53,30 +65,37 @@ void loop()
       analogWrite(MOTOR_PIN, 0);
       break;
     case 1:  // 150 Hz
-      analogWrite(MOTOR_PIN, 1023);
-      timeSinceLastButtonPush = millis();
+      analogWrite(MOTOR_PIN, 150);
       break;
     case 2:  // 100 Hz
-      analogWrite(MOTOR_PIN, 512);
-      timeSinceLastButtonPush = millis();
+      analogWrite(MOTOR_PIN, 100);
       break;
     case 3:  // Heart Beat
-      analogWrite(MOTOR_PIN, 50);
-      timeSinceLastButtonPush = millis();
+      analogWrite(MOTOR_PIN, 20);
       break;
   }
+  digitalWrite(LED_BUILTIN, HIGH);
+  delay(50);
+  digitalWrite(LED_BUILTIN, LOW);
+  delay(50);
+  
   while(digitalRead(MOTOR_BUTTON) == LOW)
   {
-    if(sleepTime - currentTime > 2000)
-    {
-      timeSinceLastButtonPush = 999999; //Trip the if statement to go into deep sleep
-    }
     sleepTime = millis();
+    if(sleepTime - currentTime > 500)
+    {
+      resetFlag = true; //Trip the if statement to go into deep sleep
+      break;
+    }
   }
-  if(timeSinceLastButtonPush - currentTime > 900000)
+  
+  if( (currentTime - timeSinceLastButtonPush > 900000) || resetFlag == true)
   {
+    resetFlag = false;
     analogWrite(MOTOR_PIN, 0);
+    delay(500);
     LowPower.powerDown(SLEEP_FOREVER, ADC_OFF, BOD_OFF);
-    detachInterrupt(digitalPinToInterrupt(MOTOR_BUTTON)); 
+    //detachInterrupt(digitalPinToInterrupt(MOTOR_BUTTON)); 
   }
+  
 }
