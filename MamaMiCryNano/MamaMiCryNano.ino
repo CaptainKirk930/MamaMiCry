@@ -25,12 +25,16 @@
 #define MOTOR_PIN 3
 #define MOTOR_BUTTON 2
 
+#define ON 0
+#define HALF_ON 420
+#define OFF 1023
+
 byte motorMode = 0;
 unsigned long timeSinceLastButtonPush = 0;
 unsigned long currentTime = 0;
 unsigned long sleepTime = 0;
 bool buttonPushed = false;
-bool resetFlag = false;
+bool resetFlag = true;
 
 void changeMotorMode() 
 {
@@ -76,23 +80,20 @@ void loop()
     Serial.println(motorMode);
   }
   buttonPushed = false;
-  if(motorMode > 3)
+  if(motorMode > 2)
   {
     motorMode = 0;
   }
   switch(motorMode)
   {
-    case 0:  // Motor Off
-      analogWrite(MOTOR_PIN, 0);
+    case 0:  // 150 Hz
+      analogWrite(MOTOR_PIN, ON);
       break;
-    case 1:  // 150 Hz
-      analogWrite(MOTOR_PIN, 150);
+    case 1:  // 100 Hz
+      analogWrite(MOTOR_PIN, HALF_ON);
       break;
-    case 2:  // 100 Hz
-      analogWrite(MOTOR_PIN, 100);
-      break;
-    case 3:  // Heart Beat
-      analogWrite(MOTOR_PIN, 20);
+    case 2:  // Heart Beat
+      heartBeat();
       break;
   }
   digitalWrite(LED_BUILTIN, HIGH);
@@ -113,7 +114,7 @@ void loop()
   if( (currentTime - timeSinceLastButtonPush > 900000) || resetFlag == true)
   {
     resetFlag = false;
-    analogWrite(MOTOR_PIN, 0);
+    analogWrite(MOTOR_PIN, OFF);
     delay(500);
     
     set_sleep_mode (SLEEP_MODE_PWR_DOWN); 
@@ -128,3 +129,18 @@ void loop()
     //LowPower.powerDown(SLEEP_FOREVER, ADC_OFF, BOD_OFF);
   } 
 }
+
+void heartBeat()
+{
+  analogWrite(MOTOR_PIN, ON);
+  delay(100);
+  analogWrite(MOTOR_PIN, OFF);
+  delay(100);
+  analogWrite(MOTOR_PIN, HALF_ON);
+  delay(150);
+  analogWrite(MOTOR_PIN, OFF);
+  delay(150);
+  delay(850);
+  
+}
+
