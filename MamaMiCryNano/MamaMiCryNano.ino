@@ -1,4 +1,4 @@
-a//Code developed by NV Jumpstarter
+//Code developed by NV Jumpstarter
 //Last edited by: John Kirkpatrick
 
 #include "LowPower.h"
