@@ -1,4 +1,4 @@
-//Code developed by NV Jumpstarter
+a//Code developed by NV Jumpstarter
 //Last edited by: John Kirkpatrick
 
 #include "LowPower.h"
@@ -26,7 +26,8 @@
 #define MOTOR_BUTTON 2
 
 #define ON 0
-#define HALF_ON 420
+#define HALF_ON 600
+#define LOW_ON 420
 #define OFF 1023
 
 byte motorMode = 0;
@@ -39,6 +40,7 @@ bool resetFlag = true;
 void changeMotorMode() 
 {
   buttonPushed = true;
+  delayMicroseconds(16383);
 }
 
 void setup() 
@@ -72,7 +74,7 @@ void setup()
 void loop() 
 {
   currentTime = millis();
-  if( (buttonPushed == true) && (currentTime - timeSinceLastButtonPush > 250) )
+  if( (buttonPushed == true) && (currentTime - timeSinceLastButtonPush > 500) )
   {
     motorMode++;
     timeSinceLastButtonPush = millis();
@@ -90,7 +92,7 @@ void loop()
       analogWrite(MOTOR_PIN, ON);
       break;
     case 1:  // 100 Hz
-      analogWrite(MOTOR_PIN, HALF_ON);
+      analogWrite(MOTOR_PIN, LOW_ON);
       break;
     case 2:  // Heart Beat
       heartBeat();
